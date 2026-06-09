@@ -8,15 +8,15 @@ public class Leitor {
     private String nome;
     private String telefone;
     private String email;
-    private String endereco;
+    private String cep;
     private LocalDate dataCadastro;
 
-    public Leitor(String nome, String cpf, String telefone, String email, String endereco) {
-        this.nome = nome;
+    public Leitor(String cpf, String nome, String telefone, String email, String cep) {
         this.cpf = cpf;
+        this.nome = nome;
         this.telefone = telefone;
         this.email = email;
-        this.endereco = endereco;
+        this.cep = cep;
         dataCadastro = LocalDate.now();
     }
 
@@ -60,12 +60,12 @@ public class Leitor {
         this.email = email;
     }
 
-    public String getEndereco() {
-        return endereco;
+    public String getCep() {
+        return cep;
     }
 
-    public void setEndereco(String endereco) {
-        this.endereco = endereco;
+    public void setCep(String endereco) {
+        this.cep = endereco;
     }
 
     public LocalDate getDataCadastro() {

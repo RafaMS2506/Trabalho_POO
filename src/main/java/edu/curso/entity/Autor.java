@@ -18,7 +18,7 @@ public class Autor {
         this.telefone = telefone;
     }
 
-    public long getCodigo() {
+    public int getCodigo() {
         return codigo;
     }
 
