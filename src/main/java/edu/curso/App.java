@@ -4,14 +4,10 @@ import edu.curso.boundary.TelaMenuPrincipal;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-public class Main extends Application {
-
-    @Override
-    public void start(Stage palco) {
-        new TelaMenuPrincipal().mostrar(palco);
-    }
+public class App {
 
     public static void main(String[] args) {
-        launch(args);
+
+        Application.launch(TelaMenuPrincipal.class, args);
     }
 }

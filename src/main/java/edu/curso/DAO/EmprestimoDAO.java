@@ -9,7 +9,8 @@ import java.util.List;
 public interface EmprestimoDAO {
     void cadastrar(Emprestimo emprestimo);
     void apagar(Emprestimo emprestimo);
-    Emprestimo pesquisarPorCodigo(int id);
+    void atualizar(Emprestimo empresimo);
+    Emprestimo pesquisarPorCodigo(int codigo);
     List<Emprestimo> listarTodos();
     List<Leitor> listarLeitores();
     List<Livro> listarLivros();

@@ -75,4 +75,8 @@ public class Leitor {
     public void setDataCadastro(LocalDate dataCadastro) {
         this.dataCadastro = dataCadastro;
     }
+
+    public String toString() {
+        return this.nome;
+    }
 }

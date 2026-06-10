@@ -1,10 +1,11 @@
 package edu.curso.controller;
 
+import edu.curso.DAO.AutorDAO;
+import edu.curso.DAO.AutorDAOImplementation;
 import edu.curso.DAO.LivroDAO;
 import edu.curso.DAO.LivroDAOImplementation;
 import edu.curso.entity.Autor;
 import edu.curso.entity.Livro;
-import javafx.beans.Observable;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -12,6 +13,8 @@ import javafx.collections.ObservableList;
 public class LivroController {
 
     private ObservableList<Livro> lista = FXCollections.observableArrayList();
+    private ObservableList<Autor> autores = FXCollections.observableArrayList();
+    private ObservableList<String> nomesAutores = FXCollections.observableArrayList();
 
     private IntegerProperty codigo = new SimpleIntegerProperty(0);
     private StringProperty titulo = new SimpleStringProperty("");
@@ -20,8 +23,10 @@ public class LivroController {
     private StringProperty isbn = new SimpleStringProperty("");
     private IntegerProperty quantidade = new SimpleIntegerProperty(0);
     private ObjectProperty<Autor> autor = new SimpleObjectProperty<>(null);
+    private StringProperty autorSelecionadoNome = new SimpleStringProperty("");
 
     private LivroDAO dao  = new LivroDAOImplementation();
+    private AutorDAO autorDao = new AutorDAOImplementation();
 
     public void fromEntity(Livro l) {
         if (l != null) {
@@ -32,22 +37,39 @@ public class LivroController {
             isbn.set(l.getIsbn());
             quantidade.set(l.getQuantidade());
             autor.set(l.getAutor());
+
+            if (l.getAutor() != null) {
+                autorSelecionadoNome.set(l.getAutor().getNome());
+            } else {
+                autorSelecionadoNome.set("");
+            }
         }
     }
 
     public Livro toEntity() {
-        Autor autorAtual = autor.get();
-
+        Autor autorReal = buscarAutorPorNomeNaLista(autorSelecionadoNome.get());
         Livro l = new Livro(
                 titulo.get(),
                 editora.get(),
                 ano.get(),
                 isbn.get(),
                 quantidade.get(),
-                autorAtual
+                autorReal
         );
         l.setCodigo(codigo.get());
         return l;
+    }
+
+    private Autor buscarAutorPorNomeNaLista(String nome) {
+        if (nome == null || nome.trim().isEmpty()) {
+            return null;
+        }
+        for (Autor a : autores) {
+            if (a.getNome() != null && a.getNome().trim().equalsIgnoreCase(nome.trim())) {
+                return a;
+            }
+        }
+        return null;
     }
 
     public void limparCampos() {
@@ -77,6 +99,18 @@ public class LivroController {
         lista.addAll(dao.buscarPorTitulo(""));
     }
 
+    public void carregarAutores() {
+        autores.clear();
+        nomesAutores.clear();
+        autores.addAll(autorDao.listarTodos());
+
+        for (Autor a : autores) {
+            if (a != null && a.getNome() != null) {
+                nomesAutores.add(a.getNome());
+            }
+        }
+    }
+
     public void apagar(int indice) {
         Livro l = lista.get(indice);
         dao.apagar(l);
@@ -92,6 +126,10 @@ public class LivroController {
         return titulo.get();
     }
 
+    public StringProperty tituloProperty() {
+        return titulo;
+    }
+
     public ObservableList<Livro> getLista() {
         return lista;
     }
@@ -100,23 +138,35 @@ public class LivroController {
         return codigo;
     }
 
-    public StringProperty getEditora() {
+    public ObservableList<Autor> autoresProperty() {
+        return autores;
+    }
+
+    public StringProperty editoraProperty() {
         return editora;
     }
 
-    public IntegerProperty getAno() {
+    public IntegerProperty anoProperty() {
         return ano;
     }
 
-    public StringProperty getIsbn() {
+    public StringProperty isbnProperty() {
         return isbn;
     }
 
-    public IntegerProperty getQuantidade() {
+    public ObservableList<String> getNomeAutores() {
+        return nomesAutores;
+    }
+
+    public StringProperty autorSelecionadoNomeProperty() {
+        return autorSelecionadoNome;
+    }
+
+    public IntegerProperty quantidadeProperty() {
         return quantidade;
     }
 
-    public ObjectProperty<Autor> getAutor() {
+    public ObjectProperty<Autor> autorProperty() {
         return autor;
     }
 }

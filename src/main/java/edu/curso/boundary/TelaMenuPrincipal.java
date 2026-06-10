@@ -1,33 +1,52 @@
 package edu.curso.boundary;
 
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class TelaMenuPrincipal {
+public class TelaMenuPrincipal extends Application {
 
-    public void mostrar(Stage palco) {
-        palco.setTitle("Biblioteca - Menu Principal");
+    private BorderPane pane = new BorderPane();
+    private Pane livroPane = new TelaLivro().render();
+    private Pane leitorPane = new TelaLeitor().render();
+    private Pane emprestimoPane = new TelaEmprestimo().render();
+    private Pane autorPane = new TelaAutor().render();
 
-        Button btAutor = new Button("Autores");
-        Button btEmprestimo = new Button("Empréstimos");
+    public void start(Stage stage) {
+        Scene scene = new Scene(pane, 800, 600);
+        pane.setCenter(livroPane);
 
-        btAutor.setOnAction(e -> new TelaAutor().mostrar());
-        btEmprestimo.setOnAction(e -> new TelaEmprestimo().mostrar());
+        MenuBar menuBar = new MenuBar();
 
-        btAutor.setMaxWidth(Double.MAX_VALUE);
-        btEmprestimo.setMaxWidth(Double.MAX_VALUE);
+        Menu mnuArquivo = new Menu("Arquivo");
+        Menu mnuCadastro = new Menu("Cadastro");
+        Menu mnuAjuda = new Menu("Ajuda");
 
-        VBox layout = new VBox(10, new Label("Sistema de Biblioteca"),
-                btAutor, btEmprestimo);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
+        MenuItem mnuLivroItem = new MenuItem("Livros");
+        MenuItem mnuLeitorItem = new MenuItem("Leitores");
+        MenuItem mnuEmprestimoItem = new MenuItem("Emprestimo");
+        MenuItem mnuAutorItem = new MenuItem("Autores");
 
-        palco.setScene(new Scene(layout, 300, 240));
-        palco.show();
+        menuBar.getMenus().addAll( mnuArquivo, mnuCadastro, mnuAjuda);
+
+        mnuCadastro.getItems().addAll( mnuLivroItem, mnuLeitorItem, mnuEmprestimoItem, mnuAutorItem );
+
+        pane.setTop( menuBar );
+
+        mnuLivroItem.setOnAction( e -> pane.setCenter( livroPane ) );
+        mnuLeitorItem.setOnAction( e -> pane.setCenter( leitorPane ) );
+        mnuEmprestimoItem.setOnAction( e -> pane.setCenter( emprestimoPane ) );
+        mnuAutorItem.setOnAction( e -> pane.setCenter( autorPane ) );
+
+        stage.setScene(scene);
+        stage.setTitle("Filmoteca");
+        stage.show();
+
     }
 }

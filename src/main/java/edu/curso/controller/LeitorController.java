@@ -23,6 +23,10 @@ public class LeitorController {
 
     private LeitorDAO dao = new LeitorDAOImplementation();
 
+    public LeitorController() {
+        carregar();
+    }
+
     public void fromEntity(Leitor l) {
         if (l != null) {
             codigo.set(l.getCodigo());
@@ -44,7 +48,6 @@ public class LeitorController {
                 cep.get(),
                 dataCadastro.get()
         );
-
 
         l.setCodigo(codigo.get());
         return l;
@@ -92,31 +95,35 @@ public class LeitorController {
         return cpf.get();
     }
 
+    public StringProperty cpfProperty() {
+        return cpf;
+    }
+
     public ObservableList<Leitor> getLista() {
         return lista;
     }
 
-    public IntegerProperty getCodigo() {
+    public IntegerProperty codigoProperty() {
         return codigo;
     }
 
-    public StringProperty getNome() {
+    public StringProperty nomeProperty() {
         return nome;
     }
 
-    public StringProperty getTelefone() {
+    public StringProperty telefoneProperty() {
         return telefone;
     }
 
-    public StringProperty getEmail() {
+    public StringProperty emailProperty() {
         return email;
     }
 
-    public StringProperty getCep() {
+    public StringProperty cepProperty() {
         return cep;
     }
 
-    public ObjectProperty<LocalDate> getDataCadastro() {
+    public ObjectProperty<LocalDate> dataCadastroProperty() {
         return dataCadastro;
     }
 }

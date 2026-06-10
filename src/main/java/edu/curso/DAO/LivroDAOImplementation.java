@@ -24,9 +24,7 @@ public class LivroDAOImplementation implements LivroDAO {
             stm.setInt(3, livro.getAno());
             stm.setString(4, livro.getIsbn());
             stm.setInt(5, livro.getQuantidade());
-
-            int codigoAutor = buscarCodigoAutor(livro.getAutor().getNome());
-            stm.setInt(6, codigoAutor);
+            stm.setInt(6, livro.getAutor().getCodigo());
 
             stm.executeUpdate();
             System.out.println("Livro cadastrado com sucesso!");
@@ -79,10 +77,10 @@ public class LivroDAOImplementation implements LivroDAO {
     @Override
     public List<Livro> buscarPorTitulo(String titulo) {
         String sql = "SELECT * FROM livro WHERE titulo LIKE ?";
-
+        List<Livro> listaLivros = new ArrayList<>();
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            List<Livro> listaLivros = new ArrayList<>();
+
             stm.setString(1,"%" + titulo + "%");
             ResultSet rs = stm.executeQuery();
 
@@ -106,6 +104,36 @@ public class LivroDAOImplementation implements LivroDAO {
             System.err.println("Livro não encontrado.");
             e.printStackTrace();
         }
+        return listaLivros;
+    }
+
+    @Override
+    public Autor buscarAutorPorNome(String nome) {
+        String sql = "SELECT * FROM autor WHERE nome = ?";
+
+        try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+
+            stm.setString(1, nome);
+            try (ResultSet rs = stm.executeQuery();) {
+
+                if (rs.next()) {
+                    int codigoAutor = rs.getInt("codigo");
+                    String nomeAutor = rs.getString("nome");
+                    String nacionalidade = rs.getString("nacionalidade");
+                    LocalDate dataNasc = rs.getDate("data_nascimento").toLocalDate();
+                    String email = rs.getString("email");
+                    String telefone = rs.getString("telefone");
+
+                    Autor autor = new Autor(nomeAutor, nacionalidade, dataNasc, email, telefone);
+                    autor.setCodigo(codigoAutor);
+                    System.out.println("Autor encontrado");
+                    return autor;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Autor não encontrado.");
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -115,20 +143,21 @@ public class LivroDAOImplementation implements LivroDAO {
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
 
             stm.setInt(1, codigo);
-            ResultSet rs = stm.executeQuery();
+            try (ResultSet rs = stm.executeQuery();) {
 
-            if (rs.next()) {
-                int codigoAutor = rs.getInt("codigo");
-                String nome = rs.getString("nome");
-                String nacionalidade = rs.getString("nacionalidade");
-                LocalDate dataNasc = rs.getDate("data_nascimento").toLocalDate();
-                String email = rs.getString("email");
-                String telefone = rs.getString("telefone");
+                if (rs.next()) {
+                    int codigoAutor = rs.getInt("codigo");
+                    String nome = rs.getString("nome");
+                    String nacionalidade = rs.getString("nacionalidade");
+                    LocalDate dataNasc = rs.getDate("data_nascimento").toLocalDate();
+                    String email = rs.getString("email");
+                    String telefone = rs.getString("telefone");
 
-                Autor autor = new Autor(nome, nacionalidade, dataNasc, email, telefone);
-                autor.setCodigo(codigoAutor);
-                System.out.println("Autor encontrado");
-                return autor;
+                    Autor autor = new Autor(nome, nacionalidade, dataNasc, email, telefone);
+                    autor.setCodigo(codigoAutor);
+                    System.out.println("Autor encontrado");
+                    return autor;
+                }
             }
         } catch (SQLException e) {
             System.err.println("Autor não encontrado.");
@@ -137,7 +166,7 @@ public class LivroDAOImplementation implements LivroDAO {
         return null;
     }
 
-    private int buscarCodigoAutor(String nome) {
+    public int buscarCodigoAutor(String nome) {
         String sql = "SELECT codigo FROM autor WHERE nome = ?";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {

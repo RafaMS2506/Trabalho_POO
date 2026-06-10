@@ -67,4 +67,8 @@ public class Emprestimo {
     public void setStatus(boolean status) {
         this.status = status;
     }
+
+//    public String toString() {
+//        return this.leitor.getNome();
+//    }
 }

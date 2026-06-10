@@ -2,10 +2,7 @@ package edu.curso.DAO;
 
 import edu.curso.entity.Autor;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,16 +29,16 @@ public class AutorDAOImplementation implements AutorDAO {
     }
 
     @Override
-    public void atualizar(int id, Autor autor) {
+    public void atualizar(Autor autor) {
         String sql = "UPDATE autor SET nome = ?, nacionalidade = ?, data_nascimento = ?, email = ?, telefone = ? WHERE codigo = ?";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
             stm.setString(1, autor.getNome());
             stm.setString(2, autor.getNacionalidade());
-            stm.setDate(3, autor.getDataNascimento() != null ? java.sql.Date.valueOf(autor.getDataNascimento()) : null);
+            stm.setDate(3, java.sql.Date.valueOf(autor.getDataNascimento()));
             stm.setString(4, autor.getEmail());
             stm.setString(5, autor.getTelefone());
-            stm.setInt(6, id);
+            stm.setInt(6, autor.getCodigo());
 
             stm.executeUpdate();
             System.out.println("Autor atualizado com sucesso!");
@@ -83,6 +80,24 @@ public class AutorDAOImplementation implements AutorDAO {
     }
 
     @Override
+    public List<Autor> pesquisarPorNome(String nome) {
+        String sql = "SELECT * FROM autor WHERE nome LIKE ?";
+        List<Autor> lista = new ArrayList<>();
+        try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+            stm.setString(1, "%" + nome + "%");
+            ResultSet rs = stm.executeQuery();
+            while (rs.next()) {
+                lista.add(montarAutor(rs));
+            }
+            return lista;
+        } catch (SQLException e) {
+            System.err.println("Autor não encontrado!");
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
+    @Override
     public List<Autor> listarTodos() {
         List<Autor> lista = new ArrayList<>();
         String sql = "SELECT * FROM autor ORDER BY nome";
@@ -92,6 +107,7 @@ public class AutorDAOImplementation implements AutorDAO {
             while (rs.next()) {
                 lista.add(montarAutor(rs));
             }
+            return lista;
         } catch (SQLException e) {
             System.err.println("Erro ao listar autores!");
             e.printStackTrace();

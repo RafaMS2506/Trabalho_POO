@@ -7,11 +7,8 @@ import edu.curso.entity.Leitor;
 import edu.curso.entity.Livro;
 import edu.curso.entity.StatusItem;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +21,7 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sqlBaixa = "UPDATE livro SET quantidade = quantidade - 1 WHERE codigo = ?";
 
         try (Connection con = Conexao.getConnection()) {
-
+            con.setAutoCommit(false);
             int codigoEmp;
             try (PreparedStatement stm = con.prepareStatement(sqlEmp, Statement.RETURN_GENERATED_KEYS)) {
                 stm.setInt(1, emprestimo.getLeitor().getCodigo());
@@ -33,10 +30,11 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
                 stm.setBoolean(4, emprestimo.isStatus());
                 stm.executeUpdate();
 
-                ResultSet chaves = stm.getGeneratedKeys();
-                chaves.next();
-                codigoEmp = chaves.getInt(1);
-                emprestimo.setCodigo(codigoEmp);
+                try (ResultSet chaves = stm.getGeneratedKeys()) {
+                    chaves.next();
+                    codigoEmp = chaves.getInt(1);
+                    emprestimo.setCodigo(codigoEmp);
+                }
             }
 
             for (ItemEmprestimo item : emprestimo.getListaLivros()) {
@@ -52,7 +50,7 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
                     stmBaixa.executeUpdate();
                 }
             }
-
+            con.commit();
             System.out.println("Empréstimo cadastrado com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao cadastrar empréstimo!");
@@ -62,11 +60,20 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
 
     @Override
     public void apagar(Emprestimo emprestimo) {
-        String sql = "DELETE FROM emprestimo WHERE codigo = ?";
+        String sqlEmprestimo = "DELETE FROM emprestimo WHERE codigo = ?";
+        String sqlItens = "DELETE FROM item_emprestimo WHERE codigo_emprestimo = ?";
 
-        try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            stm.setInt(1, emprestimo.getCodigo());
-            stm.executeUpdate();
+        try (Connection con = Conexao.getConnection()) {
+            // É necessário apagar primeiro os itens do emprestimo
+            try (PreparedStatement stmItens = con.prepareStatement(sqlItens)){
+                stmItens.setInt(1, emprestimo.getCodigo());
+                stmItens.executeUpdate();
+            }
+            // Com os itens apagados, podemos apagar o emprestimo
+            try (PreparedStatement stmEmp = con.prepareStatement(sqlEmprestimo)) {
+                stmEmp.setInt(1, emprestimo.getCodigo());
+                stmEmp.executeUpdate();
+            }
             System.out.println("Empréstimo removido com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao remover empréstimo!");
@@ -75,14 +82,35 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
     }
 
     @Override
-    public Emprestimo pesquisarPorCodigo(int id) {
+    public void atualizar(Emprestimo emprestimo) {
+        String sql = "UPDATE emprestimo SET codigo_leitor = ?, data_emprestimo = ?, data_devolucao_prevista = ?, " +
+                "status = ? WHERE codigo = ?";
+        try (Connection con = Conexao.getConnection(); PreparedStatement stm =con.prepareStatement(sql)) {
+            stm.setInt(1, emprestimo.getLeitor().getCodigo());
+            stm.setDate(2, Date.valueOf(emprestimo.getDataEmprestimo()));
+            stm.setDate(3, Date.valueOf(emprestimo.getDataDevolucaoPrevista()));
+            stm.setBoolean(4, emprestimo.isStatus());
+            stm.setInt(5, emprestimo.getCodigo());
+            stm.executeUpdate();
+            System.out.println("Empréstimo atualizado com sucesso!");
+        } catch (SQLException e) {
+            System.err.println("Erro ao atualizar empréstimo!");
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public Emprestimo pesquisarPorCodigo(int codigo) {
         String sql = "SELECT * FROM emprestimo WHERE codigo = ?";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            stm.setInt(1, id);
-            ResultSet rs = stm.executeQuery();
-            if (rs.next()) {
-                return montarEmprestimo(rs);
+            stm.setInt(1,codigo);
+
+            try (ResultSet rs = stm.executeQuery()) {
+                if (rs.next()) {
+                    return montarEmprestimo(rs);
+                }
             }
         } catch (SQLException e) {
             System.err.println("Empréstimo não encontrado!");
@@ -97,9 +125,10 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sql = "SELECT * FROM emprestimo ORDER BY data_emprestimo DESC";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            ResultSet rs = stm.executeQuery();
-            while (rs.next()) {
-                lista.add(montarEmprestimo(rs));
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(montarEmprestimo(rs));
+                }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao listar empréstimos!");
@@ -114,9 +143,10 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sql = "SELECT * FROM leitor ORDER BY nome";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            ResultSet rs = stm.executeQuery();
-            while (rs.next()) {
-                lista.add(montarLeitor(rs));
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(montarLeitor(rs));
+                }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao listar leitores!");
@@ -131,9 +161,10 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sql = "SELECT * FROM livro ORDER BY titulo";
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
-            ResultSet rs = stm.executeQuery();
-            while (rs.next()) {
-                lista.add(montarLivro(rs));
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(montarLivro(rs));
+                }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao listar livros!");
@@ -159,12 +190,13 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
 
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
             stm.setInt(1, codigoEmprestimo);
-            ResultSet rs = stm.executeQuery();
-            while (rs.next()) {
-                ItemEmprestimo item = new ItemEmprestimo(buscarLivro(rs.getInt("codigo_livro")));
-                item.setDataDevolucao(rs.getDate("data_devolucao") != null ? rs.getDate("data_devolucao").toLocalDate() : null);
-                item.setStatus(StatusItem.valueOf(rs.getString("status_item")));
-                itens.add(item);
+            try (ResultSet rs = stm.executeQuery()) {
+                while (rs.next()) {
+                    ItemEmprestimo item = new ItemEmprestimo(buscarLivro(rs.getInt("codigo_livro")));
+                    item.setDataDevolucao(rs.getDate("data_devolucao") != null ? rs.getDate("data_devolucao").toLocalDate() : null);
+                    item.setStatus(StatusItem.valueOf(rs.getString("status_item")));
+                    itens.add(item);
+                }
             }
         }
         return itens;
@@ -174,9 +206,10 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sql = "SELECT * FROM leitor WHERE codigo = ?";
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
             stm.setInt(1, codigo);
-            ResultSet rs = stm.executeQuery();
-            if (rs.next()) {
-                return montarLeitor(rs);
+            try (ResultSet rs = stm.executeQuery()) {
+                if (rs.next()) {
+                    return montarLeitor(rs);
+                }
             }
         }
         return null;
@@ -186,9 +219,10 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
         String sql = "SELECT * FROM livro WHERE codigo = ?";
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
             stm.setInt(1, codigo);
-            ResultSet rs = stm.executeQuery();
-            if (rs.next()) {
-                return montarLivro(rs);
+            try (ResultSet rs = stm.executeQuery()) {
+                if (rs.next()) {
+                    return montarLivro(rs);
+                }
             }
         }
         return null;
@@ -209,8 +243,7 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
     }
 
     private Livro montarLivro(ResultSet rs) throws SQLException {
-        Autor autor = new Autor(null, null, null, null, null);
-        autor.setCodigo(rs.getInt("codigo_autor"));
+        Autor autor = buscarAutorPorCodigo(rs.getInt("codigo_autor"));
         Livro livro = new Livro(
                 rs.getString("titulo"),
                 rs.getString("editora"),
@@ -220,5 +253,31 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
                 autor);
         livro.setCodigo(rs.getInt("codigo"));
         return livro;
+    }
+
+    private Autor buscarAutorPorCodigo (int codigo) throws SQLException  {
+        String sql = "SELECT * FROM autor WHERE codigo = ?";
+
+        try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+
+            stm.setInt(1, codigo);
+            try (ResultSet rs = stm.executeQuery();) {
+
+                if (rs.next()) {
+                    int codigoAutor = rs.getInt("codigo");
+                    String nome = rs.getString("nome");
+                    String nacionalidade = rs.getString("nacionalidade");
+                    LocalDate dataNasc = rs.getDate("data_nascimento").toLocalDate();
+                    String email = rs.getString("email");
+                    String telefone = rs.getString("telefone");
+
+                    Autor autor = new Autor(nome, nacionalidade, dataNasc, email, telefone);
+                    autor.setCodigo(codigoAutor);
+                    System.out.println("Autor encontrado");
+                    return autor;
+                }
+            }
+        }
+        return null;
     }
 }
