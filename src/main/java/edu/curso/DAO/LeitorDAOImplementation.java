@@ -1,14 +1,12 @@
 package edu.curso.DAO;
 
 import edu.curso.entity.Leitor;
-import org.mariadb.jdbc.export.Prepare;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
+
 
 public class LeitorDAOImplementation implements LeitorDAO{
 
@@ -33,7 +31,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e o apaga do banco de dados a partir do seu código
+    // Recebe um objeto do tipo Leitor e o apaga do banco de dados a partir do seu código (PK)
     @Override
     public void apagar(Leitor leitor) {
         String sql = "DELETE FROM leitor WHERE codigo = ?";
@@ -50,7 +48,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e um código
+    // Recebe um objeto do tipo Leitor e atualiza com base no seu código (PK)
     @Override
     public void atualizar(Leitor leitor) {
         String sql = "UPDATE leitor SET cpf = ?, nome = ?, telefone = ?, email = ?, cep = ? WHERE codigo = ?";
@@ -71,6 +69,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
+    // Recebe o cpf e faz a busca a partir dele, retornando o objeto Leitor completo
     @Override
     public Leitor pesquisarPorCpf(String cpf) {
         String sql = "SELECT * FROM leitor WHERE cpf = ?";
