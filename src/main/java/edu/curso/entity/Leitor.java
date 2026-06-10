@@ -11,13 +11,13 @@ public class Leitor {
     private String cep;
     private LocalDate dataCadastro;
 
-    public Leitor(String cpf, String nome, String telefone, String email, String cep) {
+    public Leitor(String cpf, String nome, String telefone, String email, String cep, LocalDate dataCadastro)  {
         this.cpf = cpf;
         this.nome = nome;
         this.telefone = telefone;
         this.email = email;
         this.cep = cep;
-        dataCadastro = LocalDate.now();
+        this.dataCadastro = dataCadastro;
     }
 
     public int getCodigo() {

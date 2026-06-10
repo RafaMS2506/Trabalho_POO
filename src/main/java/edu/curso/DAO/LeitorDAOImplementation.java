@@ -52,7 +52,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
 
     // Recebe um objeto do tipo Leitor e um código
     @Override
-    public void atualizar(int codigo, Leitor leitor) {
+    public void atualizar(Leitor leitor) {
         String sql = "UPDATE leitor SET cpf = ?, nome = ?, telefone = ?, email = ?, cep = ? WHERE codigo = ?";
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
 
@@ -61,6 +61,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
             stm.setString(3, leitor.getTelefone());
             stm.setString(4, leitor.getEmail());
             stm.setString(5, leitor.getCep());
+            stm.setInt(6, leitor.getCodigo());
 
             stm.executeUpdate();
             System.out.println("Leitor atualizado com sucesso!");
@@ -87,7 +88,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
                 String cep = rs.getString("cep");
                 LocalDate dataCadastro = rs.getDate("data_cadastro").toLocalDate();
 
-                Leitor leitor = new Leitor(cpfLeitor, nome, telefone, email, cep);
+                Leitor leitor = new Leitor(cpfLeitor, nome, telefone, email, cep, dataCadastro);
                 leitor.setCodigo(codigo);
                 leitor.setDataCadastro(dataCadastro);
                 return leitor;
