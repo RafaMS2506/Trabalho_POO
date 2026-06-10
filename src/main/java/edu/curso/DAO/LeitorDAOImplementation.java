@@ -88,7 +88,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
                 String cep = rs.getString("cep");
                 LocalDate dataCadastro = rs.getDate("data_cadastro").toLocalDate();
 
-                Leitor leitor = new Leitor(cpfLeitor, nome, telefone, email, cep);
+                Leitor leitor = new Leitor(cpfLeitor, nome, telefone, email, cep, dataCadastro);
                 leitor.setCodigo(codigo);
                 leitor.setDataCadastro(dataCadastro);
                 return leitor;
