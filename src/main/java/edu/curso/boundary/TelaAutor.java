@@ -32,7 +32,7 @@ public class TelaAutor implements Tela {
         paneCampos.add(new Label("Nome:"), 0, 0);
         paneCampos.add(txtNome, 1, 0);
 
-        paneCampos.add(new Label("Editora:"), 0, 1);
+        paneCampos.add(new Label("Nascionalidade:"), 0, 1);
         paneCampos.add(txtNacionalidade, 1, 1);
 
         paneCampos.add(new Label("Data nascimento:"), 0, 2);
