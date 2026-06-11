@@ -7,7 +7,7 @@
 ## Integrantes
 
 - **Rafael Melo da Silva**
-- **Luiz Alvarenga**
+- **Luiz Henrique Alvarenga**
 
 ## Tema escolhido
 
@@ -72,10 +72,10 @@ Empréstimos e Autores.
 
 ## Divisão de responsabilidades por integrante
 
-| Integrante | CRUDs sob responsabilidade |
-|------------|----------------------------|
-| **Rafael Melo da Silva** | **Empréstimo** e **Autor** |
-| **Luiz Alvarenga** | **Livro** e **Leitor** |
+| Integrante                  | CRUDs sob responsabilidade |
+|-----------------------------|----------------------------|
+| **Rafael Melo da Silva**    | **Empréstimo** e **Autor** |
+| **Luiz Henrique Alvarenga** | **Livro** e **Leitor** |
 
 Cada integrante implementou, para os seus CRUDs, as quatro camadas correspondentes:
 entidade (`entity`), tela (`boundary`), controlador (`controller`) e persistência (`DAO`).
