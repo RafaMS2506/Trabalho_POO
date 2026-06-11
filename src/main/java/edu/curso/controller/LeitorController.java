@@ -6,6 +6,7 @@ import edu.curso.entity.Leitor;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
 
 import java.time.LocalDate;
 
@@ -22,6 +23,10 @@ public class LeitorController {
     private ObjectProperty<LocalDate> dataCadastro = new SimpleObjectProperty<>(LocalDate.now());
 
     private LeitorDAO dao = new LeitorDAOImplementation();
+
+    public LeitorController() {
+        carregar();
+    }
 
     public void fromEntity(Leitor l) {
         if (l != null) {
@@ -45,7 +50,6 @@ public class LeitorController {
                 dataCadastro.get()
         );
 
-
         l.setCodigo(codigo.get());
         return l;
     }
@@ -60,8 +64,11 @@ public class LeitorController {
         dataCadastro.set(LocalDate.now());
     }
 
-    public void salvar() {
+    public boolean salvar() {
         Leitor l = toEntity();
+        if (!validar(l)) {
+            return false;
+        }
         System.out.println("Codigo do Leitor ==> " + l.getCodigo());
         if (codigo.get() > 0) {
             dao.atualizar(l);
@@ -70,6 +77,27 @@ public class LeitorController {
         }
         limparCampos();
         carregar();
+        return true;
+    }
+
+    private boolean validar(Leitor l) {
+        String erro = null;
+        if (l.getNome() == null || l.getNome().isBlank()) {
+            erro = "O nome não pode ficar vazio.";
+        } else if (l.getCpf() == null || l.getCpf().isBlank()) {
+            erro = "O CPF não pode ficar vazio.";
+        } else if (l.getTelefone() == null || l.getTelefone().isBlank()) {
+            erro = "O telefone deve ser informado.";
+        } else if (l.getEmail() == null || !l.getEmail().contains("@") || !l.getEmail().contains(".")) {
+            erro = "O e-mail deve ser válido.";
+        } else if (l.getCep() == null || l.getCep().isBlank()) {
+            erro = "O endereço/CEP não pode ficar vazio.";
+        }
+        if (erro != null) {
+            new Alert(Alert.AlertType.WARNING, erro).showAndWait();
+            return false;
+        }
+        return true;
     }
 
     public void carregar() {
@@ -92,31 +120,35 @@ public class LeitorController {
         return cpf.get();
     }
 
+    public StringProperty cpfProperty() {
+        return cpf;
+    }
+
     public ObservableList<Leitor> getLista() {
         return lista;
     }
 
-    public IntegerProperty getCodigo() {
+    public IntegerProperty codigoProperty() {
         return codigo;
     }
 
-    public StringProperty getNome() {
+    public StringProperty nomeProperty() {
         return nome;
     }
 
-    public StringProperty getTelefone() {
+    public StringProperty telefoneProperty() {
         return telefone;
     }
 
-    public StringProperty getEmail() {
+    public StringProperty emailProperty() {
         return email;
     }
 
-    public StringProperty getCep() {
+    public StringProperty cepProperty() {
         return cep;
     }
 
-    public ObjectProperty<LocalDate> getDataCadastro() {
+    public ObjectProperty<LocalDate> dataCadastroProperty() {
         return dataCadastro;
     }
 }

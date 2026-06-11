@@ -17,7 +17,7 @@ javafx {
 }
 
 application {
-    mainClass.set("edu.curso.Main")
+    mainClass.set("edu.curso.App")
 }
 
 java {

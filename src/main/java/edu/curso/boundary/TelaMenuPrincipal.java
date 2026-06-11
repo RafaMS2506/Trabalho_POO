@@ -1,33 +1,47 @@
 package edu.curso.boundary;
 
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class TelaMenuPrincipal {
+public class TelaMenuPrincipal extends Application {
 
-    public void mostrar(Stage palco) {
-        palco.setTitle("Biblioteca - Menu Principal");
+    private BorderPane pane = new BorderPane();
+    private Pane livroPane = new TelaLivro().render();
+    private Pane leitorPane = new TelaLeitor().render();
+    private Pane emprestimoPane = new TelaEmprestimo().render();
+    private Pane autorPane = new TelaAutor().render();
 
-        Button btAutor = new Button("Autores");
-        Button btEmprestimo = new Button("Empréstimos");
+    public void start(Stage stage) {
 
-        btAutor.setOnAction(e -> new TelaAutor().mostrar());
-        btEmprestimo.setOnAction(e -> new TelaEmprestimo().mostrar());
+        Scene scene = new Scene(pane, 800, 600);
+        Button btnLivro = new Button("Livros");
+        Button btnLeitor = new Button("Leitores");
+        Button btnEmprestimo = new Button("Emprestimos");
+        Button btnAutor = new Button("Autores");
 
-        btAutor.setMaxWidth(Double.MAX_VALUE);
-        btEmprestimo.setMaxWidth(Double.MAX_VALUE);
+        ToolBar toolBar = new ToolBar(
+                btnLivro,
+                btnLeitor,
+                btnEmprestimo,
+                btnAutor
+        );
 
-        VBox layout = new VBox(10, new Label("Sistema de Biblioteca"),
-                btAutor, btEmprestimo);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
+        pane.setTop(toolBar);
 
-        palco.setScene(new Scene(layout, 300, 240));
-        palco.show();
+        btnLivro.setOnAction(e -> pane.setCenter(livroPane));
+        btnLeitor.setOnAction(e -> pane.setCenter(leitorPane));
+        btnEmprestimo.setOnAction(e -> pane.setCenter(emprestimoPane));
+        btnAutor.setOnAction(e -> pane.setCenter(autorPane));
+
+        stage.setScene(scene);
+        stage.setTitle("Biblioteca");
+        stage.show();
     }
 }

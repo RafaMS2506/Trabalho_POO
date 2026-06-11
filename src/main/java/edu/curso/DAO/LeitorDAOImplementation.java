@@ -1,18 +1,17 @@
 package edu.curso.DAO;
 
 import edu.curso.entity.Leitor;
-import org.mariadb.jdbc.export.Prepare;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LeitorDAOImplementation implements LeitorDAO{
 
-    // Recebe um objeto do tipo Leitor e cadastra no banco de dados
     @Override
     public void cadastrar(Leitor leitor) {
         String sql = "INSERT INTO leitor (cpf, nome, telefone, email, cep, data_cadastro) VALUES (?, ?, ?, ?, ?, ?)";
@@ -23,7 +22,7 @@ public class LeitorDAOImplementation implements LeitorDAO{
             stm.setString(3, leitor.getTelefone());
             stm.setString(4, leitor.getEmail());
             stm.setString(5, leitor.getCep());
-            stm.setDate(6,java.sql.Date.valueOf(leitor.getDataCadastro()));
+            stm.setDate(6, java.sql.Date.valueOf(leitor.getDataCadastro()));
 
             stm.executeUpdate();
             System.out.println("Leitor cadastrado com sucesso!");
@@ -33,7 +32,6 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e o apaga do banco de dados a partir do seu código
     @Override
     public void apagar(Leitor leitor) {
         String sql = "DELETE FROM leitor WHERE codigo = ?";
@@ -50,7 +48,6 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e um código
     @Override
     public void atualizar(Leitor leitor) {
         String sql = "UPDATE leitor SET cpf = ?, nome = ?, telefone = ?, email = ?, cep = ? WHERE codigo = ?";
@@ -72,14 +69,15 @@ public class LeitorDAOImplementation implements LeitorDAO{
     }
 
     @Override
-    public Leitor pesquisarPorCpf(String cpf) {
-        String sql = "SELECT * FROM leitor WHERE cpf = ?";
+    public List<Leitor> pesquisarPorCpf(String cpf) {
+        String sql = "SELECT * FROM leitor WHERE cpf LIKE ?";
+        List<Leitor> lista = new ArrayList<>();
         try (Connection con = Conexao.getConnection(); PreparedStatement stm = con.prepareStatement(sql)){
-            stm.setString(1, cpf);
+            stm.setString(1, "%" + cpf + "%");
 
             ResultSet rs = stm.executeQuery();
             System.out.println("Leitor selecionado com sucesso");
-            if (rs.next()) {
+            while (rs.next()) {
                 int codigo = rs.getInt("codigo");
                 String cpfLeitor = rs.getString("cpf");
                 String nome = rs.getString("nome");
@@ -91,13 +89,15 @@ public class LeitorDAOImplementation implements LeitorDAO{
                 Leitor leitor = new Leitor(cpfLeitor, nome, telefone, email, cep, dataCadastro);
                 leitor.setCodigo(codigo);
                 leitor.setDataCadastro(dataCadastro);
-                return leitor;
+
+                lista.add(leitor);
             }
+            return lista;
         } catch (SQLException e) {
             System.err.println("Leitor não encontrado");
             e.printStackTrace();
 
         }
-        return null;
+        return lista;
     }
 }

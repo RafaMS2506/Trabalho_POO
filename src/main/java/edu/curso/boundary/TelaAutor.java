@@ -2,149 +2,155 @@ package edu.curso.boundary;
 
 import edu.curso.controller.AutorController;
 import edu.curso.entity.Autor;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import javafx.scene.layout.*;
+import javafx.util.Callback;
 
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
-public class TelaAutor {
+public class TelaAutor implements Tela {
 
     private final AutorController controller = new AutorController();
     private final TableView<Autor> tabela = new TableView<>();
 
-    private final TextField campoNome = new TextField();
-    private final TextField campoNacionalidade = new TextField();
-    private final DatePicker campoDataNascimento = new DatePicker();
-    private final TextField campoEmail = new TextField();
-    private final TextField campoTelefone = new TextField();
+    private final TextField txtNome = new TextField();
+    private final TextField txtNacionalidade = new TextField();
+    private final DatePicker dtaNascimento = new DatePicker();
+    private final TextField txtEmail = new TextField();
+    private final TextField txtTelefone = new TextField();
 
-    private int codigoSelecionado = 0; // 0 = novo cadastro
+    private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public void mostrar() {
-        Stage janela = new Stage();
-        janela.setTitle("Cadastro de Autores");
+    public Pane render() {
 
-        GridPane form = new GridPane();
-        form.setHgap(10);
-        form.setVgap(8);
-        form.setPadding(new Insets(10));
-        form.add(new Label("Nome:"), 0, 0);          form.add(campoNome, 1, 0);
-        form.add(new Label("Nacionalidade:"), 0, 1); form.add(campoNacionalidade, 1, 1);
-        form.add(new Label("Nascimento:"), 0, 2);    form.add(campoDataNascimento, 1, 2);
-        form.add(new Label("E-mail:"), 0, 3);        form.add(campoEmail, 1, 3);
-        form.add(new Label("Telefone:"), 0, 4);      form.add(campoTelefone, 1, 4);
+        BorderPane panePrincipal = new BorderPane();
+
+        GridPane paneCampos = new GridPane();
+        paneCampos.add(new Label("Nome:"), 0, 0);
+        paneCampos.add(txtNome, 1, 0);
+
+        paneCampos.add(new Label("Nacionalidade:"), 0, 1);
+        paneCampos.add(txtNacionalidade, 1, 1);
+
+        paneCampos.add(new Label("Data Nascimento:"), 0, 2);
+        paneCampos.add(dtaNascimento, 1, 2);
+
+        paneCampos.add(new Label("Email:"), 0, 3);
+        paneCampos.add(txtEmail, 1, 3);
+
+        paneCampos.add(new Label("Telefone:"), 0, 4);
+        paneCampos.add(txtTelefone, 1, 4);
 
         Button btSalvar = new Button("Salvar");
-        Button btRemover = new Button("Remover");
         Button btLimpar = new Button("Limpar");
-        HBox botoes = new HBox(10, btSalvar, btRemover, btLimpar);
-        botoes.setPadding(new Insets(0, 10, 10, 10));
+        Button btPesquisar = new Button("Pesquisar");
 
-        configurarColunas();
+        panePrincipal.setTop(paneCampos);
+        panePrincipal.setCenter(tabela);
 
-        btSalvar.setOnAction(e -> salvar());
-        btRemover.setOnAction(e -> remover());
-        btLimpar.setOnAction(e -> limparFormulario());
-
-        tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
-            if (novo != null) preencherFormulario(novo);
+        btSalvar.setOnAction((e) -> {
+            if (controller.salvar()) {
+                new Alert(Alert.AlertType.INFORMATION, "Autor gravado com sucesso!").show();
+            }
         });
 
-        VBox layout = new VBox(10, form, botoes, tabela);
-        janela.setScene(new Scene(layout, 640, 500));
-        janela.show();
+        btPesquisar.setOnAction((e) -> {
+            controller.pesquisar();
+        });
 
-        atualizarTabela();
-    }
+        btLimpar.setOnAction((e) -> controller.limparCampos());
 
-    private void configurarColunas() {
-        TableColumn<Autor, Integer> colCodigo = new TableColumn<>("Código");
-        colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
+        paneCampos.add(btSalvar, 0, 5);
+        paneCampos.add(btLimpar, 1, 5);
+        paneCampos.add(btPesquisar, 2, 5);
 
+        Bindings.bindBidirectional(txtNome.textProperty(), controller.nomeProperty());
+        Bindings.bindBidirectional(txtNacionalidade.textProperty(), controller.nacionalidadeProperty());
+        Bindings.bindBidirectional(dtaNascimento.valueProperty(), controller.dataNascProperty());
+        Bindings.bindBidirectional(txtEmail.textProperty(), controller.emailProperty());
+        Bindings.bindBidirectional(txtTelefone.textProperty(), controller.telefoneProperty());
         TableColumn<Autor, String> colNome = new TableColumn<>("Nome");
-        colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
+        colNome.setCellValueFactory(
+                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getNome())
+        );
 
-        TableColumn<Autor, String> colNac = new TableColumn<>("Nacionalidade");
-        colNac.setCellValueFactory(new PropertyValueFactory<>("nacionalidade"));
+        TableColumn<Autor, String> colNacionalidade = new TableColumn<>("Nacionalidade");
+        colNacionalidade.setCellValueFactory(
+                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getNacionalidade())
+        );
 
-        TableColumn<Autor, LocalDate> colNasc = new TableColumn<>("Nascimento");
-        colNasc.setCellValueFactory(new PropertyValueFactory<>("dataNascimento"));
+        TableColumn<Autor, String> colDataNasc = new TableColumn<>("Data Nascimento");
+        colDataNasc.setCellValueFactory(
+                itemData -> new ReadOnlyStringWrapper(
+                        itemData.getValue().getDataNascimento() != null
+                                ? itemData.getValue().getDataNascimento().format(dtf)
+                                : ""
+                )
+        );
 
-        TableColumn<Autor, String> colEmail = new TableColumn<>("E-mail");
-        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        TableColumn<Autor, String> colEmail = new TableColumn<>("Email");
+        colEmail.setCellValueFactory(
+                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getEmail())
+        );
 
-        TableColumn<Autor, String> colTel = new TableColumn<>("Telefone");
-        colTel.setCellValueFactory(new PropertyValueFactory<>("telefone"));
+        TableColumn<Autor, String> colTelefone = new TableColumn<>("Telefone");
+        colTelefone.setCellValueFactory(
+                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getTelefone())
+        );
 
-        tabela.getColumns().addAll(colCodigo, colNome, colNac, colNasc, colEmail, colTel);
-    }
+        TableColumn<Autor, Void> colAcoes = new TableColumn<>("Ações");
 
-    private void atualizarTabela() {
-        ObservableList<Autor> dados = FXCollections.observableArrayList(controller.listar());
-        tabela.setItems(dados);
-    }
+        tabela.getSelectionModel().selectedItemProperty().addListener(
+                (obj, antigo, novo) -> controller.fromEntity(novo)
+        );
 
-    private void salvar() {
-        try {
-            Autor autor = new Autor(
-                    campoNome.getText(),
-                    campoNacionalidade.getText(),
-                    campoDataNascimento.getValue(),
-                    campoEmail.getText(),
-                    campoTelefone.getText());
+        tabela.getColumns().add(colNome);
+        tabela.getColumns().add(colNacionalidade);
+        tabela.getColumns().add(colDataNasc);
+        tabela.getColumns().add(colEmail);
+        tabela.getColumns().add(colTelefone);
+        tabela.getColumns().add(colAcoes);
 
-            if (codigoSelecionado == 0) {
-                controller.cadastrar(autor);
-            } else {
-                controller.atualizar(codigoSelecionado, autor);
+        tabela.setItems(controller.getLista());
+        controller.carregar();
+
+        Callback<TableColumn<Autor, Void>, TableCell<Autor, Void>>
+                callback = new Callback<>() {
+            public TableCell<Autor, Void> call(TableColumn<Autor, Void> column) {
+                return new TableCell<Autor, Void>() {
+                    Button btApagar = new Button("Apagar");
+
+                    {
+                        btApagar.setOnAction(e -> {
+                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                                    "Apagar este Autor?", ButtonType.YES, ButtonType.NO);
+                            alert.setTitle("Confirma Deleção");
+
+                            Optional<ButtonType> result = alert.showAndWait();
+
+                            if (result.isPresent() && result.get() == ButtonType.YES) {
+                                controller.apagar(getIndex());
+                            }
+                        });
+                    }
+                    @Override
+                    public void updateItem(Void parm, boolean empty) {
+                        if (!empty) {
+                            setGraphic(btApagar);
+                        } else {
+                            setGraphic(null);
+                        }
+                    }
+                };
             }
-            limparFormulario();
-            atualizarTabela();
-        } catch (IllegalArgumentException ex) {
-            alerta(ex.getMessage());
-        }
-    }
 
-    private void remover() {
-        Autor selecionado = tabela.getSelectionModel().getSelectedItem();
-        if (selecionado == null) {
-            alerta("Selecione um autor na tabela para remover.");
-            return;
-        }
-        controller.apagar(selecionado);
-        limparFormulario();
-        atualizarTabela();
-    }
+        };
 
-    private void preencherFormulario(Autor autor) {
-        codigoSelecionado = autor.getCodigo();
-        campoNome.setText(autor.getNome());
-        campoNacionalidade.setText(autor.getNacionalidade());
-        campoDataNascimento.setValue(autor.getDataNascimento());
-        campoEmail.setText(autor.getEmail());
-        campoTelefone.setText(autor.getTelefone());
-    }
+        colAcoes.setCellFactory(callback);
 
-    private void limparFormulario() {
-        codigoSelecionado = 0;
-        campoNome.clear();
-        campoNacionalidade.clear();
-        campoDataNascimento.setValue(null);
-        campoEmail.clear();
-        campoTelefone.clear();
-        tabela.getSelectionModel().clearSelection();
-    }
-
-    private void alerta(String mensagem) {
-        new Alert(Alert.AlertType.WARNING, mensagem).showAndWait();
+        return panePrincipal;
     }
 }
