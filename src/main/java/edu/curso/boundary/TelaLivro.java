@@ -56,8 +56,9 @@ public class TelaLivro implements Tela{
         panePrincipal.setCenter(tabela);
 
         btSalvar.setOnAction((e) -> {
-            controller.salvar();
-            new Alert(Alert.AlertType.INFORMATION, "Livro gravado com sucesso!").show();
+            if (controller.salvar()) {
+                new Alert(Alert.AlertType.INFORMATION, "Livro gravado com sucesso!").show();
+            }
         });
 
         btPesquisar.setOnAction((e) -> {
@@ -79,6 +80,14 @@ public class TelaLivro implements Tela{
         Bindings.bindBidirectional(cbAutor.valueProperty(), controller.autorSelecionadoNomeProperty());
         controller.carregarAutores();
         cbAutor.setItems(controller.getNomeAutores());
+
+        // Recarrega a lista de autores do banco sempre que o combo é aberto,
+        // para refletir autores cadastrados depois que a tela já foi montada.
+        cbAutor.setOnShowing(ev -> {
+            String selecionado = cbAutor.getValue();
+            controller.carregarAutores();
+            cbAutor.setValue(selecionado);
+        });
 
         TableColumn<Livro, String> colTitulo = new TableColumn<>("Titulo");
         colTitulo.setCellValueFactory(
@@ -110,7 +119,11 @@ public class TelaLivro implements Tela{
 
         TableColumn<Livro, String> colAutor = new TableColumn<>("Autor");
         colAutor.setCellValueFactory(
-                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getAutor().getNome())
+                itemData -> new ReadOnlyStringWrapper(
+                        itemData.getValue().getAutor() != null
+                                ? itemData.getValue().getAutor().getNome()
+                                : ""
+                )
         );
 
         TableColumn<Livro, Void> colAcoes = new TableColumn<>("Ações");
@@ -128,6 +141,7 @@ public class TelaLivro implements Tela{
         tabela.getColumns().add(colAcoes);
 
         tabela.setItems(controller.getLista());
+        controller.carregar();
 
         Callback<TableColumn<Livro, Void>, TableCell<Livro, Void>>
             callback = new Callback<>() {

@@ -60,10 +60,19 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
 
     @Override
     public void apagar(Emprestimo emprestimo) {
+        String sqlRetorno    = "UPDATE livro SET quantidade = quantidade + 1 WHERE codigo IN " +
+                "(SELECT codigo_livro FROM item_emprestimo WHERE codigo_emprestimo = ?)";
+        String sqlItens      = "DELETE FROM item_emprestimo WHERE codigo_emprestimo = ?";
         String sqlEmprestimo = "DELETE FROM emprestimo WHERE codigo = ?";
-        String sqlItens = "DELETE FROM item_emprestimo WHERE codigo_emprestimo = ?";
 
         try (Connection con = Conexao.getConnection()) {
+            con.setAutoCommit(false);
+
+            // Devolve ao estoque os exemplares emprestados antes de remover os itens
+            try (PreparedStatement stmRetorno = con.prepareStatement(sqlRetorno)) {
+                stmRetorno.setInt(1, emprestimo.getCodigo());
+                stmRetorno.executeUpdate();
+            }
             // É necessário apagar primeiro os itens do emprestimo
             try (PreparedStatement stmItens = con.prepareStatement(sqlItens)){
                 stmItens.setInt(1, emprestimo.getCodigo());
@@ -74,6 +83,7 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
                 stmEmp.setInt(1, emprestimo.getCodigo());
                 stmEmp.executeUpdate();
             }
+            con.commit();
             System.out.println("Empréstimo removido com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao remover empréstimo!");
@@ -83,21 +93,60 @@ public class EmprestimoDAOImplementation implements EmprestimoDAO {
 
     @Override
     public void atualizar(Emprestimo emprestimo) {
-        String sql = "UPDATE emprestimo SET codigo_leitor = ?, data_emprestimo = ?, data_devolucao_prevista = ?, " +
+        String sqlEmp      = "UPDATE emprestimo SET codigo_leitor = ?, data_emprestimo = ?, data_devolucao_prevista = ?, " +
                 "status = ? WHERE codigo = ?";
-        try (Connection con = Conexao.getConnection(); PreparedStatement stm =con.prepareStatement(sql)) {
-            stm.setInt(1, emprestimo.getLeitor().getCodigo());
-            stm.setDate(2, Date.valueOf(emprestimo.getDataEmprestimo()));
-            stm.setDate(3, Date.valueOf(emprestimo.getDataDevolucaoPrevista()));
-            stm.setBoolean(4, emprestimo.isStatus());
-            stm.setInt(5, emprestimo.getCodigo());
-            stm.executeUpdate();
+        String sqlItem     = "INSERT INTO item_emprestimo (codigo_emprestimo, codigo_livro, data_devolucao, status_item) VALUES (?, ?, ?, ?)";
+        String sqlBaixa    = "UPDATE livro SET quantidade = quantidade - 1 WHERE codigo = ?";
+        String sqlRetorno  = "UPDATE livro SET quantidade = quantidade + 1 WHERE codigo IN " +
+                "(SELECT codigo_livro FROM item_emprestimo WHERE codigo_emprestimo = ?)";
+        String sqlDelItens = "DELETE FROM item_emprestimo WHERE codigo_emprestimo = ?";
+
+        try (Connection con = Conexao.getConnection()) {
+            con.setAutoCommit(false);
+
+            // Atualiza o cabeçalho do empréstimo
+            try (PreparedStatement stm = con.prepareStatement(sqlEmp)) {
+                stm.setInt(1, emprestimo.getLeitor().getCodigo());
+                stm.setDate(2, Date.valueOf(emprestimo.getDataEmprestimo()));
+                stm.setDate(3, Date.valueOf(emprestimo.getDataDevolucaoPrevista()));
+                stm.setBoolean(4, emprestimo.isStatus());
+                stm.setInt(5, emprestimo.getCodigo());
+                stm.executeUpdate();
+            }
+
+            // Devolve ao estoque os livros dos itens antigos antes de removê-los
+            try (PreparedStatement stmRetorno = con.prepareStatement(sqlRetorno)) {
+                stmRetorno.setInt(1, emprestimo.getCodigo());
+                stmRetorno.executeUpdate();
+            }
+
+            // Remove os itens antigos
+            try (PreparedStatement stmDel = con.prepareStatement(sqlDelItens)) {
+                stmDel.setInt(1, emprestimo.getCodigo());
+                stmDel.executeUpdate();
+            }
+
+            // Reinsere os itens atuais e dá baixa no estoque de cada um
+            for (ItemEmprestimo item : emprestimo.getListaLivros()) {
+                try (PreparedStatement stmItem = con.prepareStatement(sqlItem)) {
+                    stmItem.setInt(1, emprestimo.getCodigo());
+                    stmItem.setInt(2, item.getLivro().getCodigo());
+                    stmItem.setDate(3, item.getDataDevolucao() != null ? Date.valueOf(item.getDataDevolucao()) : null);
+                    stmItem.setString(4, item.getStatus().name());
+                    stmItem.executeUpdate();
+                }
+                try (PreparedStatement stmBaixa = con.prepareStatement(sqlBaixa)) {
+                    stmBaixa.setInt(1, item.getLivro().getCodigo());
+                    stmBaixa.executeUpdate();
+                }
+            }
+
+            con.commit();
             System.out.println("Empréstimo atualizado com sucesso!");
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar empréstimo!");
             e.printStackTrace();
         }
-
     }
 
     @Override

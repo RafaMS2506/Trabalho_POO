@@ -32,10 +32,10 @@ public class TelaAutor implements Tela {
         paneCampos.add(new Label("Nome:"), 0, 0);
         paneCampos.add(txtNome, 1, 0);
 
-        paneCampos.add(new Label("Nascionalidade:"), 0, 1);
+        paneCampos.add(new Label("Nacionalidade:"), 0, 1);
         paneCampos.add(txtNacionalidade, 1, 1);
 
-        paneCampos.add(new Label("Data nascimento:"), 0, 2);
+        paneCampos.add(new Label("Data Nascimento:"), 0, 2);
         paneCampos.add(dtaNascimento, 1, 2);
 
         paneCampos.add(new Label("Email:"), 0, 3);
@@ -52,8 +52,9 @@ public class TelaAutor implements Tela {
         panePrincipal.setCenter(tabela);
 
         btSalvar.setOnAction((e) -> {
-            controller.salvar();
-            new Alert(Alert.AlertType.INFORMATION, "Autor gravado com sucesso!");
+            if (controller.salvar()) {
+                new Alert(Alert.AlertType.INFORMATION, "Autor gravado com sucesso!").show();
+            }
         });
 
         btPesquisar.setOnAction((e) -> {
@@ -81,9 +82,13 @@ public class TelaAutor implements Tela {
                 itemData -> new ReadOnlyStringWrapper(itemData.getValue().getNacionalidade())
         );
 
-        TableColumn<Autor, String> colDataNasc = new TableColumn<>("Data nascimento");
+        TableColumn<Autor, String> colDataNasc = new TableColumn<>("Data Nascimento");
         colDataNasc.setCellValueFactory(
-                itemData -> new ReadOnlyStringWrapper(itemData.getValue().getDataNascimento().format(dtf))
+                itemData -> new ReadOnlyStringWrapper(
+                        itemData.getValue().getDataNascimento() != null
+                                ? itemData.getValue().getDataNascimento().format(dtf)
+                                : ""
+                )
         );
 
         TableColumn<Autor, String> colEmail = new TableColumn<>("Email");
@@ -110,6 +115,7 @@ public class TelaAutor implements Tela {
         tabela.getColumns().add(colAcoes);
 
         tabela.setItems(controller.getLista());
+        controller.carregar();
 
         Callback<TableColumn<Autor, Void>, TableCell<Autor, Void>>
                 callback = new Callback<>() {

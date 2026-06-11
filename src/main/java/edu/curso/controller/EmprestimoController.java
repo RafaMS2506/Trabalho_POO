@@ -8,6 +8,7 @@ import edu.curso.entity.*;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,9 +33,7 @@ public class EmprestimoController {
 
     private EmprestimoDAO dao  = new EmprestimoDAOImplementation();
     public EmprestimoController() {
-        // Sempre que o nome no combo mudar, resolve o objeto Leitor correspondente.
-        // Isso corrige o NullPointerException: leitor.get() estava sempre null porque
-        // o combo só atualizava a StringProperty, nunca o ObjectProperty<Leitor>.
+
         leitorSelecionado.addListener((obs, antigo, novo) -> {
             if (novo == null || novo.isBlank()) {
                 leitor.set(null);
@@ -46,7 +45,6 @@ public class EmprestimoController {
                     .ifPresentOrElse(leitor::set, () -> leitor.set(null));
         });
 
-        // Mesmo problema para o livro: resolve o objeto Livro pelo título selecionado.
         livroSelecionado.addListener((obs, antigo, novo) -> {
             if (novo == null || novo.isBlank()) {
                 livro.set(null);
@@ -112,9 +110,11 @@ public class EmprestimoController {
         }
     }
 
-    public void salvar() {
+    public boolean salvar() {
         Emprestimo emp = toEntity();
-        System.out.println("Codigo do Livro ==> " + emp.getCodigo());
+        if (!validar(emp)) {
+            return false;
+        }
         if(codigo.get() > 0) {
             dao.atualizar(emp);
         } else {
@@ -122,11 +122,37 @@ public class EmprestimoController {
         }
         limparCampos();
         carregar();
+        return true;
+    }
+
+    private boolean validar(Emprestimo emp) {
+        String erro = null;
+        if (emp.getLeitor() == null || emp.getLeitor().getCodigo() <= 0) {
+            erro = "O leitor deve estar cadastrado.";
+        } else if (emp.getListaLivros() == null || emp.getListaLivros().isEmpty()) {
+            erro = "Adicione pelo menos um livro ao empréstimo.";
+        } else if (emp.getDataDevolucaoPrevista().isBefore(emp.getDataEmprestimo())) {
+            erro = "A data de devolução não pode ser menor que a data de empréstimo.";
+        } else {
+            for (ItemEmprestimo item : emp.getListaLivros()) {
+                if (item.getLivro().getQuantidade() <= 0) {
+                    erro = "O livro \"" + item.getLivro().getTitulo() + "\" está sem exemplares disponíveis.";
+                    break;
+                }
+            }
+        }
+        if (erro != null) {
+            new Alert(Alert.AlertType.WARNING, erro).showAndWait();
+            return false;
+        }
+        return true;
     }
     public void limparCampos() {
         codigo.set(0);
         leitor.set(null);
         livro.set(null);
+        leitorSelecionado.set(null);
+        livroSelecionado.set(null);
         listaLivros.clear();
         dataEmprestimo.set(LocalDate.now());
         dpDevolucao.set(LocalDate.now().plusDays(30));
@@ -164,6 +190,37 @@ public class EmprestimoController {
                 titulosLivros.add(l.getTitulo());
             }
         }
+    }
+
+    // Recarrega só a lista de leitores, preservando a seleção atual. Usado ao abrir o
+    // combo de leitor, para não mexer na seleção do combo de livro (e vice-versa).
+    public void recarregarLeitores() {
+        String selecionado = leitorSelecionado.get();
+        leitores.setAll(dao.listarLeitores());
+        nomesLeitores.clear();
+        for (Leitor l : leitores) {
+            if (l != null && l.getNome() != null) {
+                nomesLeitores.add(l.getNome());
+            }
+        }
+        leitorSelecionado.set(selecionado);
+    }
+
+    // Recarrega só a lista de livros, preservando a seleção atual.
+    public void recarregarLivros() {
+        String selecionado = livroSelecionado.get();
+        livros.setAll(dao.listarLivros());
+        titulosLivros.clear();
+        for (Livro l : livros) {
+            if (l != null && l.getTitulo() != null) {
+                titulosLivros.add(l.getTitulo());
+            }
+        }
+        livroSelecionado.set(selecionado);
+    }
+
+    public boolean isEdicao() {
+        return codigo.get() > 0;
     }
 
     public ObservableList<Emprestimo> getLista() {

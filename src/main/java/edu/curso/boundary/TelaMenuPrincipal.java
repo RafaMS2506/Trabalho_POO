@@ -19,34 +19,29 @@ public class TelaMenuPrincipal extends Application {
     private Pane autorPane = new TelaAutor().render();
 
     public void start(Stage stage) {
+
         Scene scene = new Scene(pane, 800, 600);
-        pane.setCenter(livroPane);
+        Button btnLivro = new Button("Livros");
+        Button btnLeitor = new Button("Leitores");
+        Button btnEmprestimo = new Button("Emprestimos");
+        Button btnAutor = new Button("Autores");
 
-        MenuBar menuBar = new MenuBar();
+        ToolBar toolBar = new ToolBar(
+                btnLivro,
+                btnLeitor,
+                btnEmprestimo,
+                btnAutor
+        );
 
-        Menu mnuArquivo = new Menu("Arquivo");
-        Menu mnuCadastro = new Menu("Cadastro");
-        Menu mnuAjuda = new Menu("Ajuda");
+        pane.setTop(toolBar);
 
-        MenuItem mnuLivroItem = new MenuItem("Livros");
-        MenuItem mnuLeitorItem = new MenuItem("Leitores");
-        MenuItem mnuEmprestimoItem = new MenuItem("Emprestimo");
-        MenuItem mnuAutorItem = new MenuItem("Autores");
-
-        menuBar.getMenus().addAll( mnuArquivo, mnuCadastro, mnuAjuda);
-
-        mnuCadastro.getItems().addAll( mnuLivroItem, mnuLeitorItem, mnuEmprestimoItem, mnuAutorItem );
-
-        pane.setTop( menuBar );
-
-        mnuLivroItem.setOnAction( e -> pane.setCenter( livroPane ) );
-        mnuLeitorItem.setOnAction( e -> pane.setCenter( leitorPane ) );
-        mnuEmprestimoItem.setOnAction( e -> pane.setCenter( emprestimoPane ) );
-        mnuAutorItem.setOnAction( e -> pane.setCenter( autorPane ) );
+        btnLivro.setOnAction(e -> pane.setCenter(livroPane));
+        btnLeitor.setOnAction(e -> pane.setCenter(leitorPane));
+        btnEmprestimo.setOnAction(e -> pane.setCenter(emprestimoPane));
+        btnAutor.setOnAction(e -> pane.setCenter(autorPane));
 
         stage.setScene(scene);
-        stage.setTitle("Filmoteca");
+        stage.setTitle("Biblioteca");
         stage.show();
-
     }
 }

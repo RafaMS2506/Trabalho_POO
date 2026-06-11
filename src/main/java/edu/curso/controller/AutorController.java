@@ -6,6 +6,7 @@ import edu.curso.entity.Autor;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
 
 import java.time.LocalDate;
 
@@ -50,13 +51,16 @@ public class AutorController {
         codigo.set(0);
         nome.set("");
         nacionalidade.set("");
-        dataNascimento.set(LocalDate.now());
+        dataNascimento.set(null);
         email.set("");
         telefone.set("");
     }
 
-    public void salvar() {
+    public boolean salvar() {
         Autor autor = toEntity();
+        if (!validar(autor)) {
+            return false;
+        }
         System.out.println("Codigo do Autor ==> " + autor.getCodigo());
         if (codigo.get() > 0) {
             dao.atualizar(autor);
@@ -65,6 +69,27 @@ public class AutorController {
         }
         limparCampos();
         carregar();
+        return true;
+    }
+
+    private boolean validar(Autor autor) {
+        String erro = null;
+        if (autor.getNome() == null || autor.getNome().isBlank()) {
+            erro = "O nome do autor não pode ficar vazio.";
+        } else if (autor.getNacionalidade() == null || autor.getNacionalidade().isBlank()) {
+            erro = "A nacionalidade não pode ficar vazia.";
+        } else if (autor.getTelefone() == null || autor.getTelefone().isBlank()) {
+            erro = "O telefone não pode ficar vazio.";
+        } else if (autor.getEmail() == null || !autor.getEmail().contains("@") || !autor.getEmail().contains(".")) {
+            erro = "O e-mail deve ter um formato válido.";
+        } else if (autor.getDataNascimento() == null) {
+            erro = "A data de nascimento deve ser válida.";
+        }
+        if (erro != null) {
+            new Alert(Alert.AlertType.WARNING, erro).showAndWait();
+            return false;
+        }
+        return true;
     }
 
     public void carregar() {
@@ -82,40 +107,6 @@ public class AutorController {
         lista.clear();
         lista.addAll(dao.pesquisarPorNome(getNome()));
     }
-
-//    public void cadastrar(Autor autor) {
-//        validar(autor);
-//        autorDAO.cadastrar(autor);
-//    }
-//
-//    public void atualizar(int id, Autor autor) {
-//        validar(autor);
-//        autorDAO.atualizar(id, autor);
-//    }
-//
-//    public void apagar(Autor autor) {
-//        autorDAO.apagar(autor);
-//    }
-//
-//    public List<Autor> listar() {
-//        return autorDAO.listarTodos();
-//    }
-//
-//    private void validar(Autor autor) {
-//        if (autor.getNome() == null || autor.getNome().isBlank()) {
-//            throw new IllegalArgumentException("O nome do autor não pode ficar vazio.");
-//        }
-//        if (autor.getTelefone() == null || autor.getTelefone().isBlank()) {
-//            throw new IllegalArgumentException("O telefone não pode ficar vazio.");
-//        }
-//        if (autor.getEmail() == null || !autor.getEmail().contains("@") || !autor.getEmail().contains(".")) {
-//            throw new IllegalArgumentException("O e-mail deve ter um formato válido.");
-//        }
-//        if (autor.getDataNascimento() == null) {
-//            throw new IllegalArgumentException("A data de nascimento deve ser válida.");
-//        }
-//    }
-
 
     public IntegerProperty getCodigo() {
         return codigo;

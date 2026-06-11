@@ -1,7 +1,6 @@
 package edu.curso.DAO;
 
 import edu.curso.entity.Leitor;
-import org.mariadb.jdbc.export.Prepare;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,7 +12,6 @@ import java.util.List;
 
 public class LeitorDAOImplementation implements LeitorDAO{
 
-    // Recebe um objeto do tipo Leitor e cadastra no banco de dados
     @Override
     public void cadastrar(Leitor leitor) {
         String sql = "INSERT INTO leitor (cpf, nome, telefone, email, cep, data_cadastro) VALUES (?, ?, ?, ?, ?, ?)";
@@ -34,7 +32,6 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e o apaga do banco de dados a partir do seu código
     @Override
     public void apagar(Leitor leitor) {
         String sql = "DELETE FROM leitor WHERE codigo = ?";
@@ -51,7 +48,6 @@ public class LeitorDAOImplementation implements LeitorDAO{
         }
     }
 
-    // Recebe um objeto do tipo Leitor e um código
     @Override
     public void atualizar(Leitor leitor) {
         String sql = "UPDATE leitor SET cpf = ?, nome = ?, telefone = ?, email = ?, cep = ? WHERE codigo = ?";

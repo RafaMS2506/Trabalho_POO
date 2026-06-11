@@ -9,6 +9,7 @@ import edu.curso.entity.Livro;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
 
 public class LivroController {
 
@@ -19,9 +20,9 @@ public class LivroController {
     private IntegerProperty codigo = new SimpleIntegerProperty(0);
     private StringProperty titulo = new SimpleStringProperty("");
     private StringProperty editora = new SimpleStringProperty("");
-    private IntegerProperty ano = new SimpleIntegerProperty(0);
+    private IntegerProperty ano = new SimpleIntegerProperty(2026);
     private StringProperty isbn = new SimpleStringProperty("");
-    private IntegerProperty quantidade = new SimpleIntegerProperty(0);
+    private IntegerProperty quantidade = new SimpleIntegerProperty(1);
     private ObjectProperty<Autor> autor = new SimpleObjectProperty<>(null);
     private StringProperty autorSelecionadoNome = new SimpleStringProperty("");
 
@@ -76,14 +77,17 @@ public class LivroController {
         codigo.set(0);
         titulo.set("");
         editora.set("");
-        ano.set(0);
+        ano.set(2026);
         isbn.set("");
-        quantidade.set(0);
+        quantidade.set(1);
         autor.set(null);
     }
 
-    public void salvar() {
+    public boolean salvar() {
         Livro l = toEntity();
+        if (!validar(l)) {
+            return false;
+        }
         System.out.println("Codigo do Livro ==> " + l.getCodigo());
         if(codigo.get() > 0) {
             dao.atualizar(l);
@@ -92,6 +96,28 @@ public class LivroController {
         }
         limparCampos();
         carregar();
+        return true;
+    }
+
+    private boolean validar(Livro l) {
+        String erro = null;
+        int anoAtual = java.time.LocalDate.now().getYear();
+        if (l.getTitulo() == null || l.getTitulo().isBlank()) {
+            erro = "O título não pode ficar vazio.";
+        } else if (l.getIsbn() == null || l.getIsbn().isBlank()) {
+            erro = "O ISBN não pode ficar vazio.";
+        } else if (l.getAno() <= 0 || l.getAno() > anoAtual) {
+            erro = "O ano deve ser válido (até " + anoAtual + ").";
+        } else if (l.getQuantidade() < 0) {
+            erro = "A quantidade não pode ser negativa.";
+        } else if (l.getAutor() == null) {
+            erro = "Selecione um autor cadastrado para o livro.";
+        }
+        if (erro != null) {
+            new Alert(Alert.AlertType.WARNING, erro).showAndWait();
+            return false;
+        }
+        return true;
     }
 
     public void carregar() {

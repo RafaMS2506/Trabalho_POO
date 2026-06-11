@@ -36,7 +36,7 @@ public class TelaLeitor implements Tela {
         BorderPane panePrincipal = new BorderPane();
 
         GridPane paneCampos = new GridPane();
-        paneCampos.add(new Label("Cpf:"), 0, 0);
+        paneCampos.add(new Label("CPF:"), 0, 0);
         paneCampos.add(txtCpf, 1, 0);
 
         paneCampos.add(new Label("Nome:"),0, 1);
@@ -62,8 +62,9 @@ public class TelaLeitor implements Tela {
         panePrincipal.setCenter(tabela);
 
         btSalvar.setOnAction((e) -> {
-            controller.salvar();
-            new Alert(Alert.AlertType.INFORMATION, "Leitor gravado com sucesso!");
+            if (controller.salvar()) {
+                new Alert(Alert.AlertType.INFORMATION, "Leitor gravado com sucesso!").show();
+            }
         });
 
         btPesquisar.setOnAction((e) -> {
@@ -83,7 +84,7 @@ public class TelaLeitor implements Tela {
         Bindings.bindBidirectional(txtCep.textProperty(), controller.cepProperty());
         Bindings.bindBidirectional(dtaCadastro.valueProperty(), controller.dataCadastroProperty());
 
-        TableColumn<Leitor, String> colCpf = new TableColumn<>("Cpf");
+        TableColumn<Leitor, String> colCpf = new TableColumn<>("CPF");
         colCpf.setCellValueFactory(
                 itemData -> new ReadOnlyStringWrapper(itemData.getValue().getCpf())
         );
