@@ -1,127 +1,106 @@
 # Sistema de Controle de Biblioteca
 
-Aplicação **desktop** para o controle de uma biblioteca: cadastro e gestão de **autores,
-livros, leitores e empréstimos**, com validação dos dados e persistência em banco de
-dados relacional via **JDBC**.
+## Nome do projeto
 
-> Projeto acadêmico da disciplina de **Programação Orientada a Objetos (POO)**.
+**Sistema de Controle de Biblioteca**
+
+## Integrantes
+
+- **Rafael Melo da Silva**
+- **Luiz Alvarenga**
+
+## Tema escolhido
+
+Sistema corporativo desktop para **gestão de uma biblioteca**, desenvolvido em **Java 21**
+com interface gráfica em **JavaFX 21** e persistência em banco de dados **MariaDB/MySQL**
+via **JDBC**. A aplicação é dividida nas camadas **Fronteira (boundary)**, **Controle
+(controller)**, **Entidade (entity)** e **DAO**.
+
+## Descrição do problema resolvido
+
+Uma biblioteca precisa controlar seu acervo e a circulação dos livros entre os leitores.
+Feito manualmente, esse controle gera retrabalho, dados inconsistentes e dificuldade para
+saber quais exemplares estão disponíveis ou emprestados.
+
+O sistema resolve isso oferecendo o cadastro completo de **autores**, **livros** e
+**leitores**, e o registro de **empréstimos** com vários livros por empréstimo. Cada
+operação valida os dados antes de gravar (com mensagens específicas por campo) e tudo é
+persistido em banco de dados. O controle de **estoque** é automático: ao registrar um
+empréstimo os exemplares são baixados e, ao removê-lo, retornam ao acervo — sempre dentro
+de uma **transação**, para manter o banco consistente.
+
+## Entidades implementadas
+
+| Entidade | Campos | Observação |
+|----------|--------|------------|
+| **Autor** | código, nome, nacionalidade, data de nascimento, e-mail, telefone | — |
+| **Livro** | código, título, editora, ano, ISBN, quantidade, autor | Referencia um `Autor` |
+| **Leitor** | código, CPF, nome, telefone, e-mail, CEP, data de cadastro | — |
+| **Empréstimo** | código, leitor, lista de livros, data do empréstimo, data prevista de devolução, status | Mestre-detalhe |
+| **ItemEmprestimo** | empréstimo, livro, data de devolução, status | Item de cada empréstimo |
+| **StatusItem** (enum) | PENDENTE, DEVOLVIDO, ATRASADO | Status do item emprestado |
+
+Cada CRUD (**Autor, Livro, Leitor, Empréstimo**) permite **Cadastrar, Consultar, Alterar e
+Remover**, exibindo os registros em uma **`TableView`**.
+
+## Instruções para execução
+
+### Pré-requisitos
+- **JDK 21** instalado.
+- **MariaDB** ou **MySQL** em execução em `localhost:3306`.
+
+### Passos
+1. **Criar as tabelas** (uma única vez) — o script está em [`database.sql`](database.sql):
+   ```bash
+   mysql -u root -p < database.sql
+   ```
+   > O banco `biblioteca_db` é criado automaticamente pela aplicação
+   > (`createDatabaseIfNotExist=true`), mas as **tabelas** vêm do `database.sql`.
+
+2. **Configurar as credenciais** do banco na classe
+   [`Conexao`](src/main/java/edu/curso/DAO/Conexao.java) — ajuste `USUARIO`, `SENHA` e, se
+   necessário, `PORTA`.
+
+3. **Executar** (o plugin JavaFX do Gradle baixa as dependências gráficas):
+   ```bash
+   ./gradlew run
+   ```
+   Para apenas compilar: `./gradlew build`.
+
+A aplicação abre no menu **Cadastro**, de onde se acessa as telas de Livros, Leitores,
+Empréstimos e Autores.
+
+## Divisão de responsabilidades por integrante
+
+| Integrante | CRUDs sob responsabilidade |
+|------------|----------------------------|
+| **Rafael Melo da Silva** | **Empréstimo** e **Autor** |
+| **Luiz Alvarenga** | **Livro** e **Leitor** |
+
+Cada integrante implementou, para os seus CRUDs, as quatro camadas correspondentes:
+entidade (`entity`), tela (`boundary`), controlador (`controller`) e persistência (`DAO`).
+
+## Link do vídeo
+
+▶️ **YouTube:** _https://www.youtube.com/watch?v=7TjrU9PwRos_
 
 ---
 
-## Tecnologias
+### Tecnologias e arquitetura (resumo)
 
 | Item | Definição |
 |------|-----------|
 | Linguagem | Java 21 |
-| Interface gráfica | JavaFX 21 (`javafx.controls`, `javafx.fxml`) |
+| Interface | JavaFX 21 (`javafx.controls`, `javafx.fxml`) |
 | Banco de dados | MariaDB / MySQL (`biblioteca_db`) |
 | Conexão | JDBC — driver `mariadb-java-client` |
-| Arquitetura | Camadas: Fronteira (boundary), Controle (controller), Entidade (entity) e DAO |
 | Build | Gradle (`gradlew` / `build.gradle.kts`) |
-| Classe principal | `edu.curso.App` → abre `TelaMenuPrincipal` |
-
-## Arquitetura em camadas
+| Classe principal | `edu.curso.App` → `TelaMenuPrincipal` |
 
 ```
 edu.curso
-├── App                 → ponto de entrada (Application.launch)
-├── boundary    → Fronteira: telas JavaFX (TableView + formulários)
-│   ├── Tela (interface)
-│   ├── TelaMenuPrincipal  (menu e troca de telas)
-│   ├── TelaAutor / TelaLivro / TelaLeitor / TelaEmprestimo
-├── controller  → Controle: properties JavaFX, validações e orquestração do DAO
-│   └── AutorController / LivroController / LeitorController / EmprestimoController
-├── entity      → Entidade: modelos de domínio
-│   ├── Autor / Livro / Leitor / Emprestimo / ItemEmprestimo
-│   └── StatusItem (enum: PENDENTE, DEVOLVIDO, ATRASADO)
-└── DAO         → Persistência via JDBC
-    ├── Conexao  (abertura de conexão)
-    ├── *DAO (interfaces) e *DAOImplementation (SQL)
+├── boundary    → telas JavaFX (TableView + formulários)
+├── controller  → properties, validações e orquestração do DAO
+├── entity      → modelos de domínio (Autor, Livro, Leitor, Emprestimo, ItemEmprestimo)
+└── DAO         → persistência via JDBC (interfaces + implementações + Conexao)
 ```
-
-**Fluxo:** a tela (boundary) faz *binding* dos campos com as `properties` do controller →
-o controller valida e converte para a entidade → o DAO executa o SQL no banco e devolve as
-entidades de volta para a `TableView`.
-
-## CRUDs e entidades
-
-Cada CRUD permite **Cadastrar, Consultar, Alterar e Remover**, listando os registros em
-uma **`TableView`** e validando cada campo com mensagens específicas.
-
-| Entidade | Campos |
-|----------|--------|
-| **Autor** | código, nome, nacionalidade, data de nascimento, e-mail, telefone |
-| **Livro** | código, título, editora, ano, ISBN, quantidade, autor *(referência)* |
-| **Leitor** | código, CPF, nome, telefone, e-mail, CEP, data de cadastro |
-| **Empréstimo** | código, leitor, **lista de livros** (itens), data do empréstimo, data prevista de devolução, status |
-
-O **Empréstimo** é mestre-detalhe: um empréstimo possui vários `ItemEmprestimo` (um por
-livro), cada um com seu próprio status de devolução. Ao registrar um empréstimo o estoque
-do livro é baixado; ao apagar, os exemplares retornam ao estoque — tudo em **transação**.
-
-## Banco de dados
-
-O esquema completo está em [`database.sql`](database.sql), com 5 tabelas:
-
-```
-autor ──< livro          (livro.codigo_autor → autor.codigo)
-leitor ──< emprestimo     (emprestimo.codigo_leitor → leitor.codigo)
-emprestimo ──< item_emprestimo >── livro   (tabela associativa)
-```
-
-> A `Conexao` usa `createDatabaseIfNotExist=true`, ou seja, o **banco** é criado
-> automaticamente — mas as **tabelas** não. É preciso rodar o `database.sql` uma vez.
-
-## Pré-requisitos
-
-- **JDK 21** instalado (o Gradle também tenta provisionar via toolchain).
-- **MariaDB** ou **MySQL** em execução em `localhost:3306`.
-
-## Como executar
-
-1. **Criar as tabelas** (uma única vez):
-   ```bash
-   mysql -u root -p < database.sql
-   ```
-
-2. **Configurar as credenciais** na classe
-   [`Conexao`](src/main/java/edu/curso/DAO/Conexao.java) — ajuste `USUARIO`, `SENHA` e,
-   se necessário, `PORTA` para os do seu banco local.
-
-3. **Executar** (o plugin JavaFX do Gradle cuida das dependências gráficas):
-   ```bash
-   ./gradlew run
-   ```
-
-   Para apenas compilar:
-   ```bash
-   ./gradlew build
-   ```
-
-## Estrutura do projeto
-
-```
-Trabalho_POO/
-├── build.gradle.kts          # dependências e plugins (JavaFX, application)
-├── database.sql              # script de criação das tabelas
-├── docs/                     # documentação do projeto
-├── gradlew / gradlew.bat     # wrapper do Gradle
-└── src/main/java/edu/curso/  # código-fonte (boundary, controller, entity, DAO)
-```
-
-## Documentação
-
-Material complementar em [`docs/`](docs/):
-
-| Documento | Conteúdo |
-|-----------|----------|
-| [01 - Visão Geral](docs/01-visao-geral.md) | Objetivos, escopo e glossário |
-| [02 - Arquitetura](docs/02-arquitetura.md) | Camadas, responsabilidades e fluxo |
-| [03 - Requisitos](docs/03-requisitos.md) | Requisitos funcionais e não funcionais |
-| [04 - Modelo de Dados](docs/04-modelo-de-dados.md) | Entidades, dicionário de dados e relacionamentos |
-| [05 - Banco de Dados](docs/05-banco-de-dados.md) | Tabelas e notas de modelagem |
-| [07 - Casos de Uso](docs/07-casos-de-uso.md) | Atores e fluxos das operações |
-| [08 - Plano de Implementação](docs/08-plano-de-implementacao.md) | Etapas e classes |
-
-> Observação: os documentos em `docs/` registram o **planejamento**; em pontos de
-> nomenclatura de colunas, o esquema **vigente** é o de [`database.sql`](database.sql).
